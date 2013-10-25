@@ -1,0 +1,5 @@
+include_directories(../include)
+set(TRANSFORM_TEST transform_test)
+set(TRANSFORM_TEST_SOURCES transform_test.cpp)
+add_executable(transform_test ${TRANSFORM_TEST_SOURCES})
+#target_link_libraries(${TRANSFORM_TEST} ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES} )
