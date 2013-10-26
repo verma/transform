@@ -33,8 +33,8 @@ int main() {
 	std::fill(x_in.begin(), x_in.end(), 1.0);
 	std::fill(y_in.begin(), y_in.end(), 2.0);
 
-	transform::transform<transform::backends::cpu> cpu_trans;
-	transform::transform<transform::backends::full_concurrency_multi_cpu> multi_cpu_trans;
+	transform::transformer<transform::backends::cpu> cpu_trans;
+	transform::transformer<transform::backends::full_concurrency_multi_cpu> multi_cpu_trans;
 
 	std::cout << "Running tests..." << std::endl;
 

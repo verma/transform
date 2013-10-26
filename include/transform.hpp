@@ -20,7 +20,7 @@ namespace transform {
 	template<
 		typename TBackend
 	>
-	class transform {
+	class transformer {
 		public:
 		template<
 			typename TTransform,

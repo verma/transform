@@ -191,3 +191,4 @@ set(PROJCL_DEPENDENT_LIBRARIES ${OPENCL_LIBRARIES} ${PROJ4_LIBRARIES} ${BLAS_LIB
 
 add_subdirectory(src)
 add_subdirectory(test)
+add_subdirectory(examples)

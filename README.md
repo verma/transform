@@ -13,11 +13,13 @@ The library is based on backends which can be switched around, not all backends 
     #include "transform.hpp"
     
     int main() {
-        using transform::transform;
-        using transform::backends::cpu;
-        using transform::transforms::scale;
+		using namespace transform;
+		using namespace transform::backends;
+		using namespace transform::transforms;
+
+		// ...
         
-        transform<cpu> t;
+        transformer<cpu> t;
         t.run(scale(10.0),
             x_in, y_in, x_out, y_out);
     }
