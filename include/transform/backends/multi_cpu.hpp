@@ -9,6 +9,7 @@
 #include <boost/range.hpp>
 
 #include <algorithm>
+#include <vector>
 
 namespace transform {
 	namespace backends {
@@ -27,10 +28,11 @@ namespace transform {
 				typedef typename boost::range_const_iterator<ForwardIterableRange>::type const_iterator;
 
 				auto compute = 
-					[&p](const_iterator sx, const_iterator ex, const_iterator sy, const_iterator ey, iterator ox, iterator oy) {
-					//for ( ; sx != ex ; ++sx, ++sy) {
-					//	p.op(*sx, *sy, *ox++, *oy++);
-					//}
+					[&p](const_iterator sx, const_iterator ex, const_iterator sy,
+							const_iterator ey, iterator ox, iterator oy) {
+					for ( ; sx != ex ; ++sx, ++sy) {
+						p.op(*sx, *sy, *ox++, *oy++);
+					}
 				};
 
 				typename boost::range_difference<ForwardIterableRange>::type 
@@ -38,7 +40,7 @@ namespace transform {
 					sy = boost::size(y);
 
 				assert(sx == sy);
-				assert(sx == boost::size(xOut));
+				assert((size_t)sx == boost::size(xOut));
 				assert(boost::size(xOut) == boost::size(yOut));
 
 				const_iterator xb = boost::begin(x),
@@ -55,7 +57,7 @@ namespace transform {
 					const_iterator xe = xb + per_batch, ye = yb + per_batch;
 
 					std::thread t(compute, xb, xe, yb, ye, ox, oy);
-					threads.push_back(t);
+					threads.push_back(std::move(t));
 
 					xb += per_batch;
 					yb += per_batch;

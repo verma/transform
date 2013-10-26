@@ -122,13 +122,13 @@ else()
   # Recommended C++ compilation flags
   # -Weffc++
   set(TRANSFORM_COMMON_CXX_FLAGS
-          "-Wextra -Wall -Wno-unused-parameter -Wno-unused-variable -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long -fPIC")
+          "-std=c++11 -Wextra -Wall -Wno-unused-parameter -Wno-unused-variable -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long -fPIC")
 
   if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS}")
     if (CMAKE_COMPILER_IS_GNUCXX)
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++98")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     endif()
     
     set(TRANSFORM_COMPILER_GCC 1)
@@ -137,6 +137,19 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS}")
     set(TRANSFORM_COMPILER_CLANG 1)
   endif()
+
+  # Compiler-specific C++11 activation.
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+	  execute_process(
+		  COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	  if (NOT (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7))
+		  message(FATAL_ERROR "${PROJECT_NAME} requires g++ 4.7 or greater.")
+	  endif ()
+  elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  else ()
+	  message(FATAL_ERROR "Your C++ compiler does not support C++11.")
+  endif ()
 endif(WIN32)
 
 if (APPLE)

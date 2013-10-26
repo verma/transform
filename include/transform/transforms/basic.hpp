@@ -15,13 +15,13 @@ namespace transform {
 			scale(const T& _s) : s(_s) { }
 
 			void op(const T& x, const T& y, T& xo, T&yo) const {
-				xo = t * x;
-				yo = t * y;
+				xo = s * x;
+				yo = s * y;
 			}
 		};
 
 		template<typename T>
-		struct sincos {
+		struct sine_cosine {
 			void op(const T& x, const T& y, T& xo, T&yo) const {
 				xo = std::sin(x) * (1 + std::cos(y) * std::log(x * y * 0.001));
 				yo = std::sin(y) * (1 + std::cos(x) * std::log(x * y * 0.001));
