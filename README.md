@@ -8,7 +8,7 @@ How to use?
 
 Right now not many transforms exist, but eventually the library will grow on as needed basis.
 
-The library is based on backends which can be switched around, not all backends support all transforms, and certain backends expect to have certain things defined inside transforms.
+The library is based on backends which can be switched around, not all backends support all transforms, and certain backends expect to have certain things defined inside transforms.  Everything is validated statically at compile time.
 
     #include "transform.hpp"
     
