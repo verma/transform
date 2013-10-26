@@ -7,7 +7,7 @@
 #include "transform/backends/cpu.hpp"
 #include "transform/backends/multi_cpu.hpp"
 
-#if HAVE_PROJ
+#if HAVE_PROJ4
 #include "transform/backends/proj.hpp"
 #endif
 
