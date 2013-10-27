@@ -51,6 +51,8 @@ namespace transform {
 			typename TEllipsoid = cartographic::ellipsoids::sphere
 		>
 		struct projection {
+			typedef TEllipsoid ellipsoid_type;
+
 			TFrom from;
 			TTo to;
 

@@ -20,7 +20,10 @@
 
 namespace transform {
 	namespace backends {
-		struct proj {
+		template<unsigned MaxConcurrency>
+		struct multi_proj {
+			typedef multi_proj<MaxConcurrency> this_type;
+
 			template<
 				typename TProjection,
 				typename ForwardIterableRange>
@@ -33,6 +36,29 @@ namespace transform {
 				assert(sx == boost::size(y));
 				assert(boost::size(y) == boost::size(out_x));
 				assert(boost::size(out_x) == boost::size(out_y));
+
+
+				auto compute = [&p](double *x, double *y, double *z, size_t stride, size_t point_count) {
+					typename TProjection::ellipsoid_type ellps;
+
+					std::string from = projection_to_string(p.from, ellps);
+					std::string to = projection_to_string(p.to, ellps);
+
+					projPJ pj_in = pj_init_plus(from.c_str()),
+						   pj_out = pj_init_plus(to.c_str());
+
+					assert(pj_in != NULL);
+					assert(pj_out != NULL);
+
+					// fasten your seatbelts
+					pj_transform(pj_in, pj_out,
+							static_cast<long>(point_count),
+							static_cast<int>(stride),
+							x, y, NULL);
+
+					pj_free(pj_in);
+					pj_free(pj_out);
+				};
 
 				typedef typename boost::range_iterator<ForwardIterableRange>::type iterator;
 				typedef typename boost::range_const_iterator<ForwardIterableRange>::type const_iterator;
@@ -47,45 +73,22 @@ namespace transform {
 				std::copy(bx, boost::end(x), ox);
 				std::copy(by, boost::end(y), oy);
 
-				// TODO: do projection with proj
-				do_transform(p, &(*ox), &(*oy), NULL, 1, sx);
+				utility::scheduler<MaxConcurrency> c;
+				unsigned max_threads = c.concurrency();
+				size_t per_batch = sx / max_threads;
+
+				size_t offset = 0;
+				for (unsigned i = 0 ; i < max_threads ; i ++) {
+					double *x = &(*(ox + offset));
+					double *y = &(*(oy + offset));
+					double *z = NULL;
+
+					c.queue(compute, x, y, z, 1, per_batch);
+					offset += per_batch;
+				}
 			}
 
-		
 			private:
-			// since projcl deals in doubles we use doubles here to make anything not convertible to
-			// double* error out, raw pointers to doubles and std::vector<double>::iterator should pass through
-			template<
-				typename TFrom,
-				typename TTo,
-				typename TEllipsoid>
-			static void do_transform(const transforms::projection<TFrom, TTo, TEllipsoid>& p,
-					double *x, double *y, double *z, size_t stride, size_t point_count) {
-				std::string from = projection_to_string(p.from, TEllipsoid());
-				std::string to = projection_to_string(p.to, TEllipsoid());
-
-				projPJ pj_in = pj_init_plus(from.c_str()),
-					   pj_out = pj_init_plus(to.c_str());
-
-				if (!pj_in || !pj_out)
-					throw std::runtime_error("Failed to initialize transforms");
-
-				// fasten your seatbelts
-				int error =
-					pj_transform(pj_in, pj_out,
-							static_cast<long>(point_count),
-							static_cast<int>(stride),
-							x, y, NULL);
-
-				pj_free(pj_in);
-				pj_free(pj_out);
-
-				if (error != 0)
-					throw std::runtime_error("Transform failed");
-
-				// all good otherwise
-			}
-
 			template<typename TEllipsoid>
 			static std::string projection_to_string(const cartographic::projections::latlong& p, const TEllipsoid& ell) {
 				std::stringstream sstr;
@@ -106,6 +109,9 @@ namespace transform {
 				return sstr.str();
 			}
 		};
+
+		typedef multi_proj<0> full_concurrency_proj;
+		typedef multi_proj<1> proj;
 	}
 }
 #endif // __transform_backends_proj_hpp__

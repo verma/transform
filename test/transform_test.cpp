@@ -22,7 +22,7 @@ int main() {
 	size_t set_size = 50000000;
 
 	std::cout << "Maximum concurrency: " <<
-		transform::backends::full_concurrency_multi_cpu::concurrency() << std::endl;
+		transform::utility::scheduler<>::concurrency() << std::endl;
 	std::cout << "Total points: " << set_size << std::endl;
 	std::cout << "Preping data..." << std::endl;
 

@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <vector>
 
+#include "../concurrency.hpp"
+
 namespace transform {
 	namespace backends {
 		template<unsigned MaxConcurrency = 0>
@@ -49,15 +51,16 @@ namespace transform {
 				iterator ox = boost::begin(xOut),
 						 oy = boost::begin(yOut);
 
-				std::vector<std::thread> threads;
-				unsigned max_threads = concurrency();
+
+				utility::scheduler<MaxConcurrency> c;
+				unsigned max_threads = c.concurrency();
 				size_t per_batch = sx / max_threads;
+
 
 				for (unsigned i = 0 ; i < max_threads ; i ++) {
 					const_iterator xe = xb + per_batch, ye = yb + per_batch;
 
-					std::thread t(compute, xb, xe, yb, ye, ox, oy);
-					threads.push_back(std::move(t));
+					c.queue(compute, xb, xe, yb, ye, ox, oy);
 
 					xb += per_batch;
 					yb += per_batch;
@@ -65,21 +68,12 @@ namespace transform {
 					oy += per_batch;
 				}
 
-				std::for_each(threads.begin(), threads.end(), [](std::thread& t) {
-					t.join();
-				});
-			}
-
-			static unsigned concurrency() {
-				unsigned con = std::thread::hardware_concurrency();
-				if (MaxConcurrency)
-					return std::min(MaxConcurrency, con);
-
-				return con;
+				c.wait();
 			}
 		};
 
 		typedef multi_cpu<0> full_concurrency_multi_cpu;
+		typedef multi_cpu<1> cpu;
 	}
 }
 

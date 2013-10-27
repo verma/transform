@@ -4,7 +4,6 @@
 #ifndef __transform_transform_hpp__
 #define __transform_transform_hpp__
 
-#include "transform/backends/cpu.hpp"
 #include "transform/backends/multi_cpu.hpp"
 
 #if HAVE_PROJ4
