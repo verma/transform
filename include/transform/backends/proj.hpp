@@ -37,18 +37,35 @@ namespace transform {
 				assert(boost::size(y) == boost::size(out_x));
 				assert(boost::size(out_x) == boost::size(out_y));
 
+				typename TProjection::ellipsoid_type ellps;
 
-				auto compute = [&p](double *x, double *y, double *z, size_t stride, size_t point_count) {
-					typename TProjection::ellipsoid_type ellps;
+				std::string from = projection_to_string(p.from, ellps);
+				std::string to = projection_to_string(p.to, ellps);
 
-					std::string from = projection_to_string(p.from, ellps);
-					std::string to = projection_to_string(p.to, ellps);
 
-					projPJ pj_in = pj_init_plus(from.c_str()),
-						   pj_out = pj_init_plus(to.c_str());
+				auto compute = [&p, &from, &to](double *x, double *y, double *z,
+						size_t stride, size_t point_count) {
+					projCtx ctx = pj_ctx_alloc();
+
+					projPJ pj_in = pj_init_plus_ctx(ctx, from.c_str()),
+						   pj_out = pj_init_plus_ctx(ctx, to.c_str());
 
 					assert(pj_in != NULL);
 					assert(pj_out != NULL);
+
+					// convert all points to radians
+					//
+#define TO_RADIAN 0.017453292519943295769236907684886;
+
+					double *px = x, *py = y, *pz = z;
+					for (size_t i = 0 ; i < point_count ; i ++) {
+						*px *= TO_RADIAN; px += stride;
+						*py *= TO_RADIAN; py += stride;
+						if (pz) {
+							*pz *= TO_RADIAN;
+							pz += stride;
+						}
+					}
 
 					// fasten your seatbelts
 					pj_transform(pj_in, pj_out,
@@ -58,6 +75,9 @@ namespace transform {
 
 					pj_free(pj_in);
 					pj_free(pj_out);
+
+					pj_ctx_free(ctx);
+
 				};
 
 				typedef typename boost::range_iterator<ForwardIterableRange>::type iterator;
@@ -86,6 +106,8 @@ namespace transform {
 					c.queue(compute, x, y, z, 1, per_batch);
 					offset += per_batch;
 				}
+
+				c.wait();
 			}
 
 			private:

@@ -1,5 +1,5 @@
 #
-# top-level CMake configuration file for PDAL
+# top-level CMake configuration file for TRANSFORM
 #
 # (based originally on the libLAS files copyright Mateusz Loskot)
 
@@ -61,7 +61,7 @@ set(WITH_TESTS TRUE CACHE BOOL "Choose if TRANSFORM unit tests should be built")
 #------------------------------------------------------------------------------
 
 # Name of test suite runner
-set(TRANSFORM_UNIT_TEST transform_test)
+set(TRANSFORM_UNIT_TEST transform_tests)
 
 
 
@@ -170,10 +170,12 @@ set(BOOST_USE_STATIC_LIBS OFF)
 set(BOOST_USE_MULTITHREADED ON)
 set(BOOST_USE_STATIC_RUNTIME OFF)
 
-find_package(Boost "1.54.0")
+find_package(Boost "1.54.0" COMPONENTS unit_test_framework)
 if(NOT Boost_FOUND)
 	message(FATAL_ERROR "boost is required")
 endif(NOT Boost_FOUND)
+
+set(TRANSFORM_DEPENDENT_LIBRARIES ${Boost_LIBRARIES})
 
 find_package(PROJ4 4.8.0)
 if(NOT PROJ4_FOUND)
@@ -182,13 +184,18 @@ else(NOT PROJ4_FOUND)
 	set(TRANSFORM_HAVE_PROJ4 1)
 	add_definitions(-DHAVE_PROJ4)
 	include_directories(${PROJ4_INCLUDE_DIR})
+	set(TRANSFORM_DEPENDENT_LIBRARIES ${TRANSFORM_DEPENDENT_LIBRARIES} ${PROJ4_LIBRARIES})
 endif(NOT PROJ4_FOUND)
 
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(TRANSFORM_LIBRARY transform)
-set(PROJCL_DEPENDENT_LIBRARIES ${OPENCL_LIBRARIES} ${PROJ4_LIBRARIES} ${BLAS_LIBRARIES} ${Boost_LIBRARIES})
 
 add_subdirectory(src)
-add_subdirectory(test)
 add_subdirectory(examples)
+add_subdirectory(benchmarks)
+
+if(WITH_TESTS)
+	add_subdirectory(test)
+endif()
+
