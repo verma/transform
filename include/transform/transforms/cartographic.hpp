@@ -7,6 +7,7 @@
 
 #include <string>
 #include <cmath>
+#include <type_traits>
 
 namespace transform {
 	namespace cartographic {
@@ -48,13 +49,15 @@ namespace transform {
 	namespace transforms {
 		template<
 			typename TValue,
+			typename TOutput,
 			typename TFrom,
 			typename TTo,
 			typename TEllipsoid
 		>
 		void do_op(const TValue& x, const TValue& y,
-				TValue& ox, TValue& oy) {
-			// TODO: static assert here
+				TOutput& ox, TOutput& oy) {
+			static_assert(sizeof(TValue) == 0,
+					"You need to specialize transform op for the projections you intend to use");
 		}
 
 		template<
@@ -71,10 +74,10 @@ namespace transform {
 			projection(const TFrom& from_, const TTo& to_):
 				from(from_), to(to_) {}
 
-			template<typename TValue>
+			template<typename TValue, typename TOutput>
 			void op(const TValue& x, const TValue& y,
-					TValue& ox, TValue& oy) const {
-				do_op<TValue, TFrom, TTo, TEllipsoid>(x, y, ox, oy);
+					TOutput& ox, TOutput& oy) const {
+				do_op<TValue, TOutput, TFrom, TTo, TEllipsoid>(x, y, ox, oy);
 			}
 		};
 
@@ -82,6 +85,7 @@ namespace transform {
 		// e.g. cpu
 		template<>
 		void do_op<
+			double,
 			double,
 			cartographic::projections::latlong,
 			cartographic::projections::tmerc<double>,

@@ -19,15 +19,16 @@ namespace transform {
 		struct multi_cpu {
 			template<
 				typename TTransform,
-				typename ForwardIterableRange
+				typename ForwardIterableInputRange,
+				typename ForwardIterableOutputRange
 			>
-			static void run(const TTransform& p,
-				const ForwardIterableRange& x,
-				const ForwardIterableRange& y,
-				ForwardIterableRange& xOut,
-				ForwardIterableRange& yOut) {
-				typedef typename boost::range_iterator<ForwardIterableRange>::type iterator;
-				typedef typename boost::range_const_iterator<ForwardIterableRange>::type const_iterator;
+			void run(const TTransform& p,
+				const ForwardIterableInputRange& x,
+				const ForwardIterableInputRange& y,
+				ForwardIterableOutputRange& xOut,
+				ForwardIterableOutputRange& yOut) const {
+				typedef typename boost::range_iterator<ForwardIterableOutputRange>::type iterator;
+				typedef typename boost::range_const_iterator<ForwardIterableInputRange>::type const_iterator;
 
 				auto compute = 
 					[&p](const_iterator sx, const_iterator ex, const_iterator sy,
@@ -37,7 +38,7 @@ namespace transform {
 					}
 				};
 
-				typename boost::range_difference<ForwardIterableRange>::type 
+				typename boost::range_difference<ForwardIterableInputRange>::type 
 					sx = boost::size(x),
 					sy = boost::size(y);
 

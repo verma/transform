@@ -23,12 +23,14 @@ namespace transform {
 		public:
 		template<
 			typename TTransform,
-			typename ForwardIterableRange
+			typename ForwardIterableInputRange,
+			typename ForwardIterableOutputRange
 		>
 		void run(const TTransform& transform,
-				const ForwardIterableRange& x, const ForwardIterableRange& y,
-				ForwardIterableRange& xOut, ForwardIterableRange& yOut) {
-			TBackend::run(transform, x, y, xOut, yOut);
+				const ForwardIterableInputRange& x, const ForwardIterableInputRange& y,
+				ForwardIterableOutputRange& xOut, ForwardIterableOutputRange& yOut) {
+			TBackend b;
+			b.run(transform, x, y, xOut, yOut);
 		}
 	};
 }

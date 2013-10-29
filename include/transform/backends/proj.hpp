@@ -26,10 +26,14 @@ namespace transform {
 
 			template<
 				typename TProjection,
-				typename ForwardIterableRange>
-			static void run(const TProjection& p,
-					const ForwardIterableRange& x, const ForwardIterableRange& y,
-					ForwardIterableRange& out_x, ForwardIterableRange& out_y) {
+				typename ForwardIterableInputRange,
+				typename ForwardIterableOutputRange
+			>
+			void run(const TProjection& p,
+				const ForwardIterableInputRange& x,
+				const ForwardIterableInputRange& y,
+				ForwardIterableOutputRange& out_x,
+				ForwardIterableOutputRange& out_y) const {
 				size_t sx = boost::size(x);
 
 				// data sanity
@@ -80,8 +84,8 @@ namespace transform {
 
 				};
 
-				typedef typename boost::range_iterator<ForwardIterableRange>::type iterator;
-				typedef typename boost::range_const_iterator<ForwardIterableRange>::type const_iterator;
+				typedef typename boost::range_iterator<ForwardIterableOutputRange>::type iterator;
+				typedef typename boost::range_const_iterator<ForwardIterableInputRange>::type const_iterator;
 
 				// projcl does in-place transforms, so move all input values to output
 				const_iterator bx = boost::begin(x),
