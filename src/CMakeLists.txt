@@ -1,0 +1,17 @@
+if(TRANSFORM_STATIC_LIBRARY)
+	set(TRANSFORM_LIBRARY_TYPE STATIC)
+else()
+	set(TRANSFORM_LIBRARY_TYPE SHARED)
+endif()
+
+SET(TRANSFORM_LIBRARY_SOURCES
+	cartographic_cpu.cpp
+	opencl_loaders.cpp)
+
+include_directories(../include)
+
+add_library(${TRANSFORM_LIBRARY} ${TRANSFORM_LIBRARY_TYPE} ${TRANSFORM_LIBRARY_SOURCES})
+
+if (NOT TRANSFORM_STATIC_LIBRARY)
+	target_link_libraries(${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
+endif()

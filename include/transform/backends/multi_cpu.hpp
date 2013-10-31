@@ -78,4 +78,6 @@ namespace transform {
 	}
 }
 
+#include "support/cpu_forwards.ipp"
+
 #endif // __transform_backends_multi_cpu_hpp__

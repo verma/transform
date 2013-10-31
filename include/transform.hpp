@@ -5,6 +5,7 @@
 #define __transform_transform_hpp__
 
 #include "transform/backends/multi_cpu.hpp"
+#include "transform/backends/opencl.hpp"
 
 #if HAVE_PROJ4
 #include "transform/backends/proj.hpp"
@@ -21,6 +22,8 @@ namespace transform {
 	>
 	class transformer {
 		public:
+		transformer(): b_() { }
+
 		template<
 			typename TTransform,
 			typename ForwardIterableInputRange,
@@ -29,9 +32,11 @@ namespace transform {
 		void run(const TTransform& transform,
 				const ForwardIterableInputRange& x, const ForwardIterableInputRange& y,
 				ForwardIterableOutputRange& xOut, ForwardIterableOutputRange& yOut) {
-			TBackend b;
-			b.run(transform, x, y, xOut, yOut);
+			b_.run(transform, x, y, xOut, yOut);
 		}
+
+		private:
+		TBackend b_;
 	};
 }
 
