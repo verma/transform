@@ -94,7 +94,8 @@ namespace transform {
 				cartographic::projections::tmerc<double>,
 				cartographic::ellipsoids::sphere>				projections_latlong_tmerc_double_sphere;
 
-			opencl() {
+			opencl():
+				device_id_(NULL), context_(NULL), queue_(NULL) {
 				int err;
 
 				cl_device_id		device_id;
@@ -149,7 +150,7 @@ namespace transform {
 
 		private:
 			template<typename TContainer> cl_mem make_cl_mem(TContainer& c) const;
-			template<typename TContainer> cl_mem make_cl_mem(const TContainer& c) const;
+			template<typename TContainer> cl_mem make_cl_mem(const TContainer& c, cl_event *evt) const;
 			template<typename TContainer> void download_to_host(cl_command_queue q, 
 					cl_mem mem, TContainer& c, cl_event *evt) const;
 

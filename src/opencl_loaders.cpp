@@ -54,17 +54,16 @@ namespace transform {
 					#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 					__kernel void scale(
-					__global double* x,
-					__global double* y,
-					__global double* x_out,
-					__global double* y_out,
+					__global double16* x,
+					__global double16* y,
+					__global double16* x_out,
+					__global double16* y_out,
 					const unsigned int count,
 					const double scaleWith) {
 					   int i = get_global_id(0);
-					   if(i < count) {
-						   x_out[i] = x[i] * scaleWith;
-						   y_out[i] = y[i] * scaleWith;
-					   }
+
+					   x_out[i] = x[i] * scaleWith;
+					   y_out[i] = y[i] * scaleWith;
 					}
 				)code";
 
@@ -102,34 +101,33 @@ namespace transform {
 					#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
 					__kernel void tmerc(
-					__global double* x,
-					__global double* y,
-					__global double* x_out,
-					__global double* y_out,
+					__global double16* x_in,
+					__global double16* y_in,
+					__global double16* x_out,
+					__global double16* y_out,
 					const unsigned int count,
 					const double scale,
 					const double x0,
 					const double y0) {
 					   unsigned int i = get_global_id(0);
-					   if(i < count) {
-						   double lambda = radians(x[i]);
-						   double phi    = radians(y[i]);
-    
-						   double x, y, b, cosPhi, sinLambda, cosLambda;
-    
-						   cosPhi = cos(phi);
-						   sinLambda = sincos(lambda, &cosLambda);
-    
-						   b = cosPhi * sinLambda;
-						   x = 0.5 * log((1.0 + b) / (1.0 - b));
-						   y = cosPhi * cosLambda / sqrt(1.0 - b * b);
-						   y = select(acos(y), 0.0, (ulong)(fabs(y) >= 1.0));
-						   y = select(y, -y, (ulong)(phi < 0.0));
-						   y = y;
-    
-						   x_out[i] = x0 + scale * x;
-						   y_out[i] = y0 + scale * y;
-					   }
+
+					   double16 lambda = radians(x_in[i]);
+					   double16 phi    = radians(y_in[i]);
+
+					   double16 x, y, b, cosPhi, sinLambda, cosLambda;
+
+					   cosPhi = cos(phi);
+					   sinLambda = sincos(lambda, &cosLambda);
+
+					   b = cosPhi * sinLambda;
+					   x = 0.5 * log((1.0 + b) / (1.0 - b));
+					   y = cosPhi * cosLambda / sqrt(1.0 - b * b);
+					   y = select(acos(y), 0.0, fabs(y) >= 1.0);
+					   y = select(y, -y, phi < 0.0);
+					   y = y;
+
+					   x_out[i] = x0 + scale * x;
+					   y_out[i] = y0 + scale * y;
 					}
 				)code";
 
