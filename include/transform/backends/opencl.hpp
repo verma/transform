@@ -6,6 +6,7 @@
 #define __transform_backends_opencl_hpp__
 
 #include "../transforms/basic.hpp"
+#include "../transforms/cartographic.hpp"
 
 #include <OpenCL/opencl.h>
 
@@ -32,7 +33,7 @@ namespace transform {
 				}
 			};
 
-			template<typename T>
+			template<typename TDeviceType, typename T>
 			struct opencl_kernel_wrapper {
 				static void load(cl_context ctx, cl_device_id dev) {
 					auto p = detail::kernel<T>::load_transform(ctx, dev);
@@ -85,6 +86,14 @@ namespace transform {
 			typename TDeviceType
 		>
 		struct opencl {
+			// typdefs for supported transforms
+			//
+			typedef transforms::scale<double>					scale_double;
+			typedef transforms::projection<
+				cartographic::projections::latlong,
+				cartographic::projections::tmerc<double>,
+				cartographic::ellipsoids::sphere>				projections_latlong_tmerc_double_sphere;
+
 			opencl() {
 				int err;
 
@@ -112,12 +121,14 @@ namespace transform {
 				queue_ = queue;
 
 				// load some of our supported Kernels
-				detail::opencl_kernel_wrapper<transforms::scale<double>>::load(context, device_id);
+				detail::opencl_kernel_wrapper<TDeviceType, scale_double>::load(context, device_id);
+				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_sphere>::load(context, device_id);
 			}
 
 			~opencl() {
 				// release our loaded kernels
-				detail::opencl_kernel_wrapper<transforms::scale<double>>::release();
+				detail::opencl_kernel_wrapper<TDeviceType, scale_double>::release();
+				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_sphere>::release();
 
 				clReleaseCommandQueue(queue_);
 				clReleaseContext(context_);
@@ -138,7 +149,7 @@ namespace transform {
 
 		private:
 			template<typename TContainer> cl_mem make_cl_mem(TContainer& c) const;
-			template<typename TContainer> cl_mem make_cl_mem(const TContainer& c, cl_event *evt) const;
+			template<typename TContainer> cl_mem make_cl_mem(const TContainer& c) const;
 			template<typename TContainer> void download_to_host(cl_command_queue q, 
 					cl_mem mem, TContainer& c, cl_event *evt) const;
 

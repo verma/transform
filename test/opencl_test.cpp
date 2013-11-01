@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(gpu_device_scales_correctly)
 	}
 }
 
-BOOST_AUTO_TEST_CASE(full_concurrency_proj_matches)
+BOOST_AUTO_TEST_CASE(gpu_device_computes_spherical_tmerc)
 {
 	std::vector<double> x, y, std_x, std_y;
 
@@ -109,37 +109,7 @@ BOOST_AUTO_TEST_CASE(full_concurrency_proj_matches)
 	typedef projections::latlong		projection_from;
 	typedef projections::tmerc<double>	projection_to;
 
-	transformer<full_concurrency_proj> t;
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
-				projection_from(),
-				projection_to(projection_to::offset_t(0.0, 0.0))),
-				x, y, out_x, out_y);
-
-	for(size_t i = 0, il = x.size() ; i < il ; i ++) {
-		BOOST_CHECK_CLOSE(std_x.at(i), out_x.at(i), 0.00001);
-		BOOST_CHECK_CLOSE(std_y.at(i), out_y.at(i), 0.00001);
-	}
-}
-
-BOOST_AUTO_TEST_CASE(single_cpu_tmerc)
-{
-	std::vector<double> x, y, std_x, std_y;
-
-	const size_t SIZE = 10000;
-
-	prep_tmerc("sphere", SIZE, x, y, std_x, std_y);
-	std::vector<double> out_x(SIZE), out_y(SIZE);
-
-	// generate our data
-	using namespace transform;
-	using namespace transform::transforms;
-	using namespace transform::backends;
-	using namespace transform::cartographic;
-
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
-
-	transformer<cpu> t;
+	transformer<opencl<gpu_device>> t;
 	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),

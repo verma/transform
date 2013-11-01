@@ -13,9 +13,28 @@ namespace transform {
 			typedef typename TContainer::value_type element_type;
 
 			// TODO: Assert context_ is valid
+			int err;
 			cl_mem b = clCreateBuffer(context_, CL_MEM_WRITE_ONLY,
-					sizeof(element_type) * boost::size(c), NULL, NULL);
-			if (!b)
+					sizeof(element_type) * boost::size(c), NULL, &err);
+			if (!b || err != CL_SUCCESS)
+				throw std::runtime_error("Out of memory while trying to allocate OpenCL buffer");
+
+			return b;
+		}
+
+		template<typename TDeviceType>
+		template<typename TContainer>
+		cl_mem opencl<TDeviceType>::make_cl_mem(const TContainer& c) const {
+			typedef typename TContainer::value_type element_type;
+
+			// TODO: Assert context_ is valid
+			// TODO: Assert queue_ is valid
+			//
+			int err;
+			cl_mem b = clCreateBuffer(context_, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+					sizeof(element_type) * boost::size(c),
+					(void*)(&c[0]), &err);
+			if (!b || err != CL_SUCCESS)
 				throw std::runtime_error("Out of memory while trying to allocate OpenCL buffer");
 
 			return b;
@@ -35,29 +54,6 @@ namespace transform {
 				throw std::runtime_error("Failed to queue download to host");
 		}
 
-		template<typename TDeviceType>
-		template<typename TContainer>
-		cl_mem opencl<TDeviceType>::make_cl_mem(const TContainer& c, cl_event* evt) const {
-			typedef typename TContainer::value_type element_type;
-
-			// TODO: Assert context_ is valid
-			// TODO: Assert queue_ is valid
-			//
-			cl_mem b = clCreateBuffer(context_, CL_MEM_READ_ONLY,
-					sizeof(element_type) * boost::size(c), NULL, NULL);
-			if (!b)
-				throw std::runtime_error("Out of memory while trying to allocate OpenCL buffer");
-
-			cl_bool sync = (evt == NULL) ? CL_TRUE : CL_FALSE;
-
-			int err =
-				clEnqueueWriteBuffer(queue_, b, sync, 0, sizeof(element_type) * boost::size(c),
-						&c[0], 0, NULL, evt);
-			if (err != CL_SUCCESS)
-				throw std::runtime_error("Failed to upload data to OpenCL device");
-
-			return b;
-		}
 
 		template<typename TDeviceType>
 		bool opencl<TDeviceType>::supports_double_precision() {
@@ -94,24 +90,26 @@ namespace transform {
 			assert(boost::size(out_x) == boost::size(y));
 			assert(boost::size(out_x) == boost::size(out_y));
 
-			cl_event uploads[2];
 
+#if false
+			cl_ulong max_buf;
+			err =
+				clGetDeviceInfo(device_id_, CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+						sizeof(cl_ulong), &max_buf, NULL);
+#endif
 			// Apply the kernel
 			// 
-			cl_mem x_in = make_cl_mem(x, &uploads[0]);
-			cl_mem y_in = make_cl_mem(y, &uploads[1]);
+			cl_mem x_in = make_cl_mem(x);
+			cl_mem y_in = make_cl_mem(y);
 
 			cl_mem x_out = make_cl_mem(out_x);
 			cl_mem y_out = make_cl_mem(out_y);
 
-			// wait for uploads to finish
-			clWaitForEvents(2, uploads);
-
-			detail::opencl_kernel_wrapper<TTransform>::configure(context_, p, x_in, y_in, x_out, y_out, size);
+			detail::opencl_kernel_wrapper<TDeviceType,TTransform>::configure(context_, p, x_in, y_in, x_out, y_out, size);
 
 			// Get the maximum work group size for executing the kernel on the device
 			//
-			cl_kernel kernel = detail::opencl_kernel_wrapper<TTransform>::kernel();
+			cl_kernel kernel = detail::opencl_kernel_wrapper<TDeviceType,TTransform>::kernel();
 			size_t local;
 
 			err = clGetKernelWorkGroupInfo(kernel, device_id_, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
@@ -125,9 +123,8 @@ namespace transform {
 			//
 			local = std::min(size, local);
 
-			err = clEnqueueNDRangeKernel(queue_, kernel, 1, NULL, &size, &local, 0, NULL, NULL);
+			err = clEnqueueNDRangeKernel(queue_, kernel, 1, NULL, &size, NULL, 0, NULL, NULL);
 			if (err != CL_SUCCESS) {
-				std::cout << err << std::endl;
 				throw std::runtime_error("Failed to execute kernel");
 			}
 
