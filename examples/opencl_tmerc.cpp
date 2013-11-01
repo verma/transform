@@ -19,7 +19,7 @@ int main() {
 
 	transformer<opencl<gpu_device>> t;
 
-	const size_t SIZE = 10000;
+	const size_t SIZE = 50000000;
 
 	std::vector<double> 
 		x(SIZE),

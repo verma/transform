@@ -5,8 +5,6 @@
 #ifndef __transform_backends_support_opencl_detail_hpp__
 #define __transform_backends_support_opencl_detail_hpp__
 
-#define padded_size(s,p) (p * ((s + (p-1)) / p))
-
 namespace transform {
 	namespace backends {
 		template<typename TDeviceType>
@@ -14,7 +12,7 @@ namespace transform {
 		cl_mem opencl<TDeviceType>::make_cl_mem(TContainer& c) const {
 			typedef typename TContainer::value_type element_type;
 
-			size_t ps = padded_size(boost::size(c), 16);
+			size_t ps = boost::size(c);
 
 			assert(context_ != NULL);
 
@@ -32,7 +30,7 @@ namespace transform {
 		cl_mem opencl<TDeviceType>::make_cl_mem(const TContainer& c, cl_event *evt) const {
 			typedef typename TContainer::value_type element_type;
 
-			size_t ps = padded_size(boost::size(c), 16);
+			size_t ps = boost::size(c);
 
 			assert(context_ != NULL);
 			assert(queue_ != NULL);
@@ -104,8 +102,6 @@ namespace transform {
 			assert(boost::size(out_x) == boost::size(y));
 			assert(boost::size(out_x) == boost::size(out_y));
 
-			size_t ps = padded_size(size, 16);
-
 
 #if false
 			cl_ulong max_buf;
@@ -129,30 +125,7 @@ namespace transform {
 
 			cl_kernel kernel = detail::opencl_kernel_wrapper<TDeviceType,TTransform>::kernel();
 
-			// execute the kernel, since we're dealing with 16 doubles in one go
-			size_t dim_size = ps / 16; // 16 doubles at a time
-
-			size_t local;
-			err = clGetKernelWorkGroupInfo(kernel, device_id_, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL);
-			if (err != CL_SUCCESS)
-				throw std::runtime_error("Could not query kernel work group size");
-
-			// local needs to be less than and a multiple of dim_size
-			if (dim_size < local) {
-				local = dim_size;
-			}
-			else {
-				// find the largest factor of dim_size which is less than local
-				size_t factor = 1;
-				for (size_t i = 1, il = sqrt(dim_size) ; (i < il) && (i < local) ; i ++)  {
-					if (dim_size % i == 0) factor = i;
-				}
-
-				local = factor;
-			}
-
-
-			err = clEnqueueNDRangeKernel(queue_, kernel, 1, NULL, &dim_size, NULL, 0, NULL, NULL);
+			err = clEnqueueNDRangeKernel(queue_, kernel, 1, NULL, &size, NULL, 0, NULL, NULL);
 			if (err != CL_SUCCESS) {
 				throw std::runtime_error("Failed to execute kernel");
 			}
