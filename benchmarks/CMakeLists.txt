@@ -13,5 +13,8 @@ endif()
 add_executable(cpu_tmerc_sphere_marks cpu_tmerc_sphere_marks.cpp)
 target_link_libraries(cpu_tmerc_sphere_marks ${ALL_LIBRARIES})
 
+add_executable(opencl_marks opencl_marks.cpp)
+target_link_libraries(opencl_marks ${ALL_LIBRARIES})
+
 
 

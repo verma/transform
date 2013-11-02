@@ -5,6 +5,10 @@
 #ifndef __transform_backends_support_opencl_detail_hpp__
 #define __transform_backends_support_opencl_detail_hpp__
 
+#include "../../utility.hpp"
+
+#define pad(x,n) (((x + n-1) / n) * n)
+
 namespace transform {
 	namespace backends {
 		template<typename TDeviceType>
@@ -13,12 +17,13 @@ namespace transform {
 			typedef typename TContainer::value_type element_type;
 
 			size_t ps = boost::size(c);
+			size_t bs = pad(ps * sizeof(element_type), 1024);
 
 			assert(context_ != NULL);
 
 			int err;
 			cl_mem b = clCreateBuffer(context_, CL_MEM_WRITE_ONLY,
-					sizeof(element_type) * ps, NULL, &err);
+					bs, NULL, &err);
 			if (!b || err != CL_SUCCESS)
 				throw std::runtime_error("Out of memory while trying to allocate OpenCL buffer");
 
@@ -31,13 +36,14 @@ namespace transform {
 			typedef typename TContainer::value_type element_type;
 
 			size_t ps = boost::size(c);
+			size_t bs = pad(ps * sizeof(element_type), 1024);
 
 			assert(context_ != NULL);
 			assert(queue_ != NULL);
 
 			int err;
 			cl_mem b = clCreateBuffer(context_, CL_MEM_READ_ONLY,
-					sizeof(element_type) * ps, NULL, &err);
+					bs, NULL, &err);
 			if (!b || err != CL_SUCCESS)
 				throw std::runtime_error("Out of memory while trying to allocate OpenCL buffer");
 
@@ -111,6 +117,8 @@ namespace transform {
 #endif
 			cl_event uploads[2];
 
+			auto start = util::timer_start();
+
 			// Apply the kernel
 			// 
 			cl_mem x_in = make_cl_mem(x, &uploads[0]);
@@ -120,6 +128,8 @@ namespace transform {
 			cl_mem y_out = make_cl_mem(out_y);
 
 			clWaitForEvents(2, uploads);
+
+			auto end = util::timer_end(start);
 
 			detail::opencl_kernel_wrapper<TDeviceType,TTransform>::configure(context_, p, x_in, y_in, x_out, y_out, size);
 
