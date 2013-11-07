@@ -23,6 +23,8 @@ namespace transform {
 				static std::pair<cl_program, cl_kernel> load_transform(cl_context ctx) {
 					static_assert(sizeof(T) == 0,
 							"You need to specialize load_transform for this type");
+
+					return std::make_pair((cl_program)NULL, (cl_kernel)NULL);
 				}
 
 				static void configure_transform(const T& t,

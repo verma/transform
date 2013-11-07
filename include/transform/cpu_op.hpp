@@ -13,8 +13,10 @@ namespace transform {
 	>
 	void do_op(const TValue& x, const TValue& y,
 			TOutput& ox, TOutput& oy) {
+		/*
 		static_assert(sizeof(TValue) == 0,
 				"You need to specialize transform op for the projections you intend to use");
+				*/
 	}
 
 	template<typename TTransform>

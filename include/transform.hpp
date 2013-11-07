@@ -11,6 +11,10 @@
 #include "transform/backends/proj.hpp"
 #endif
 
+#if HAVE_CUDA
+#include "transform/backends/cuda.hpp"
+#endif
+
 #include "transform/transforms/basic.hpp"
 #include "transform/transforms/cartographic.hpp"
 #include "transform/utility.hpp"

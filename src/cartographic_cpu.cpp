@@ -3,6 +3,7 @@
 //
 
 #include "transform/transforms/cartographic.hpp"
+#include <limits>
 
 namespace transform {
 	// specialization do_op for projection for use by backends that do per point processing

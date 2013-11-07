@@ -7,7 +7,6 @@
 
 #include <string>
 #include <cmath>
-#include <type_traits>
 
 #include "../cpu_op.hpp"
 
@@ -54,7 +53,7 @@ namespace transform {
 			typename TTo,
 			typename TEllipsoid = cartographic::ellipsoids::sphere
 		>
-		struct projection : cpu_op<projection<TFrom, TTo, TEllipsoid>> {
+		struct projection : cpu_op<projection<TFrom, TTo, TEllipsoid> > {
 			typedef TEllipsoid ellipsoid_type;
 
 			TFrom from;

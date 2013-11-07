@@ -3,11 +3,9 @@
 #
 # (based originally on the libLAS files copyright Mateusz Loskot)
 
-if(WIN32)
-cmake_minimum_required(VERSION 2.8.7)
-else()
+# we need this version for somewhat mature handing of CUDA stuff
+#
 cmake_minimum_required(VERSION 2.6.0)
-endif()
 
 project(TRANSFORM)
 
@@ -81,7 +79,6 @@ endif()
 
 set(PROJCL_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 
-
 #------------------------------------------------------------------------------
 # Platform and compiler specific settings
 #------------------------------------------------------------------------------
@@ -118,15 +115,32 @@ if(WIN32)
 
 else()
   # not WIN32
+  # Determine what flags need to be passed to compilers to get c++11 support
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
+	  execute_process(
+		  COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	  if (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7)
+		  message(STATUS "Compiler is 4.7+, new style C++11 flags enabled")
+		  set(TRANSFORM_COMMON_CXX11_FLAGS "-std=c++11")
+	  else()
+		  message(STATUS "Compiler is older than 4.7, old style C++11 flags enabled")
+		  set(TRANSFORM_COMMON_CXX11_FLAGS "-std=c++0x")
+	  endif ()
+  elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	  set(TRANSFORM_COMMON_CXX11_FLAGS "-std=c++11")
+	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
+  else ()
+	  message(FATAL_ERROR "Your C++ compiler does not support C++11.")
+  endif ()
 
   # Recommended C++ compilation flags
   # -Weffc++
   set(TRANSFORM_COMMON_CXX_FLAGS
-          "-std=c++11 -Wextra -Wall -Wno-unused-parameter -Wno-unused-variable -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wredundant-decls -Wno-long-long -fPIC")
+          "-Wextra -Wall -Wno-unused-parameter -Wno-unused-variable -Wpointer-arith -Wcast-align -Wcast-qual -Wfloat-equal -Wno-long-long -fPIC")
 
   if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS} ${TRANSFORM_COMMON_CXX11_FLAGS}")
     if (CMAKE_COMPILER_IS_GNUCXX)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
     endif()
@@ -134,22 +148,10 @@ else()
     set(TRANSFORM_COMPILER_GCC 1)
     
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TRANSFORM_COMMON_CXX_FLAGS} ${TRANSFORM_COMMON_CXX11_FLAGS}")
     set(TRANSFORM_COMPILER_CLANG 1)
   endif()
 
-  # Compiler-specific C++11 activation.
-  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
-	  execute_process(
-		  COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-	  if (NOT (GCC_VERSION VERSION_GREATER 4.7 OR GCC_VERSION VERSION_EQUAL 4.7))
-		  message(FATAL_ERROR "${PROJECT_NAME} requires g++ 4.7 or greater.")
-	  endif ()
-  elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-  else ()
-	  message(FATAL_ERROR "Your C++ compiler does not support C++11.")
-  endif ()
 endif(WIN32)
 
 if (APPLE)
@@ -186,6 +188,30 @@ else(NOT PROJ4_FOUND)
 	include_directories(${PROJ4_INCLUDE_DIR})
 	set(TRANSFORM_DEPENDENT_LIBRARIES ${TRANSFORM_DEPENDENT_LIBRARIES} ${PROJ4_LIBRARIES})
 endif(NOT PROJ4_FOUND)
+
+# Find CUDA
+if(CUDA_HOST_COMPILER)
+	set(USE_CUDA TRUE)
+elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" OR "${CMAKE_CXX_COMPILER}" MATCHES "clang")
+		message(WARNING "CUDA: Unsupported compiler, not activing...")
+else()
+	set(USE_CUDA TRUE)
+endif()
+
+if (USE_CUDA)
+	find_package(CUDA)
+	if(NOT CUDA_FOUND)
+		message(WARNING "CUDA toolkit is not available, CUDA based backend will not be available")
+	else()
+		message(STATUS "CUDA Found")
+		set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-gencode arch=compute_30,code=sm_30 -ftz=false -prec-div=true -prec-sqrt=true)
+		#message(STATUS ${CUDA_LIBRARIES})
+		set(TRANSFORM_DEPENDENT_LIBRARIES ${TRANSFORM_DEPENDENT_LIBRARIES} ${CUDA_LIBRARIES})
+
+		set(TRANSFORM_HAVE_CUDA 1)
+		add_definitions(-DHAVE_CUDA)
+	endif()
+endif()
 
 # find opencl
 if(APPLE)
