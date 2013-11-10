@@ -41,11 +41,8 @@ namespace transform {
 				assert(boost::size(y) == boost::size(out_x));
 				assert(boost::size(out_x) == boost::size(out_y));
 
-				typename TProjection::ellipsoid_type ellps;
-
-				std::string from = projection_to_string(p.from, ellps);
-				std::string to = projection_to_string(p.to, ellps);
-
+				std::string from = projection_to_string(p.from);
+				std::string to = projection_to_string(p.to);
 
 				auto compute = [&p, &from, &to](double *x, double *y, double *z,
 						size_t stride, size_t point_count) {
@@ -115,20 +112,19 @@ namespace transform {
 			}
 
 			private:
-			template<typename TEllipsoid>
-			static std::string projection_to_string(const cartographic::projections::latlong& p, const TEllipsoid& ell) {
+			static std::string projection_to_string(const cartographic::projections::latlong& p) {
 				std::stringstream sstr;
-				sstr << "+proj=" << p.name
-					<< " +ellps=" << ell.name;
+				sstr << "+proj=" << p.name;
 
 				return sstr.str();
 			}
 
-			template<typename T, typename TEllipsoid>
-			static std::string projection_to_string(const cartographic::projections::tmerc<T>& p, const TEllipsoid& ell) {
+			template<typename TEllipsoid, typename T>
+			static std::string projection_to_string(const cartographic::projections::tmerc<TEllipsoid, T>& p) {
 				std::stringstream sstr;
+
 				sstr << "+proj=" << p.name
-					<< " +ellps=" << ell.name
+					<< " +ellps=" << TEllipsoid::name
 					<< " +lat_0=" << std::abs(p.offset.first) << (p.offset.first > 0.0 ? "n" : "s")
 					<< " +lon_0=" << std::abs(p.offset.second) << (p.offset.second > 0.0 ? "e" : "w");
 

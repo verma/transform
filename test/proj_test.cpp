@@ -19,7 +19,7 @@ void gen_latlong_points(std::vector<double>& x, std::vector<double>& y,
 void tmerc_proj(const std::string& ell,
 		std::vector<double>& x,
 		std::vector<double>& y) {
-	std::string from = std::string("+proj=latlong +ellps=") + ell;
+	std::string from = std::string("+proj=latlong");
 	std::string to = std::string("+proj=tmerc +ellps=") + ell;
 
 	projPJ pj_in = pj_init_plus(from.c_str()),
@@ -81,11 +81,11 @@ BOOST_AUTO_TEST_CASE(single_cpu_proj_matches)
 	using namespace transform::backends;
 	using namespace transform::cartographic;
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	transformer<proj> t;
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
+	t.run(projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -111,11 +111,11 @@ BOOST_AUTO_TEST_CASE(full_concurrency_proj_matches)
 	using namespace transform::backends;
 	using namespace transform::cartographic;
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	transformer<full_concurrency_proj> t;
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
+	t.run(projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -141,11 +141,71 @@ BOOST_AUTO_TEST_CASE(single_cpu_tmerc)
 	using namespace transform::backends;
 	using namespace transform::cartographic;
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	transformer<cpu> t;
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
+	t.run(projection<projection_from, projection_to>(
+				projection_from(),
+				projection_to(projection_to::offset_t(0.0, 0.0))),
+				x, y, out_x, out_y);
+
+	for(size_t i = 0, il = x.size() ; i < il ; i ++) {
+		BOOST_CHECK_CLOSE(std_x.at(i), out_x.at(i), 0.00001);
+		BOOST_CHECK_CLOSE(std_y.at(i), out_y.at(i), 0.00001);
+	}
+}
+
+BOOST_AUTO_TEST_CASE(wgs84_tmerc)
+{
+	std::vector<double> x, y, std_x, std_y;
+
+	const size_t SIZE = 10000;
+
+	prep_tmerc("WGS84", SIZE, x, y, std_x, std_y);
+	std::vector<double> out_x(SIZE), out_y(SIZE);
+
+	// generate our data
+	using namespace transform;
+	using namespace transform::transforms;
+	using namespace transform::backends;
+	using namespace transform::cartographic;
+
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::WGS84, double>	projection_to;
+
+	transformer<proj> t;
+	t.run(projection<projection_from, projection_to>(
+				projection_from(),
+				projection_to(projection_to::offset_t(0.0, 0.0))),
+				x, y, out_x, out_y);
+
+	for(size_t i = 0, il = x.size() ; i < il ; i ++) {
+		BOOST_CHECK_CLOSE(std_x.at(i), out_x.at(i), 0.00001);
+		BOOST_CHECK_CLOSE(std_y.at(i), out_y.at(i), 0.00001);
+	}
+}
+
+BOOST_AUTO_TEST_CASE(wgs84_cpu_tmerc)
+{
+	std::vector<double> x, y, std_x, std_y;
+
+	const size_t SIZE = 10000;
+
+	prep_tmerc("WGS84", SIZE, x, y, std_x, std_y);
+	std::vector<double> out_x(SIZE), out_y(SIZE);
+
+	// generate our data
+	using namespace transform;
+	using namespace transform::transforms;
+	using namespace transform::backends;
+	using namespace transform::cartographic;
+
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::WGS84, double>	projection_to;
+
+	transformer<cpu> t;
+	t.run(projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);

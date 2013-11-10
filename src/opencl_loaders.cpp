@@ -91,12 +91,12 @@ namespace transform {
 					throw std::runtime_error("Failed to configure kernel");
 			}
 
+			typedef transforms::projection<cartographic::projections::latlong,
+					cartographic::projections::tmerc<cartographic::ellipsoids::sphere, double>>
+				proj_latlong_to_tmerc_sphere_d;
+
 			std::pair<cl_program, cl_kernel>
-			kernel<transforms::projection<
-				cartographic::projections::latlong,
-				cartographic::projections::tmerc<double>,
-				cartographic::ellipsoids::sphere
-			>>::load_transform(cl_context ctx, cl_device_id dev) {
+			kernel<proj_latlong_to_tmerc_sphere_d>::load_transform(cl_context ctx, cl_device_id dev) {
 				const std::string source = R"code(
 					#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
@@ -136,14 +136,8 @@ namespace transform {
 			}
 
 			void
-			kernel<transforms::projection<
-				cartographic::projections::latlong,
-				cartographic::projections::tmerc<double>,
-				cartographic::ellipsoids::sphere
-			>>::configure_transform(const transforms::projection<
-						cartographic::projections::latlong,
-						cartographic::projections::tmerc<double>,
-						cartographic::ellipsoids::sphere>& s,
+			kernel<proj_latlong_to_tmerc_sphere_d>::configure_transform(
+					const proj_latlong_to_tmerc_sphere_d& s,
 					cl_kernel kernel,
 					cl_mem x_in, cl_mem y_in, cl_mem x_out, cl_mem y_out, size_t num_elements) {
 				int err = 0;

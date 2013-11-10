@@ -36,10 +36,10 @@ int main() {
 	// and offsetted at 0.0, 0.0
 	
 	// give nicer names
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong								projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>		projection_to;
 
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
+	t.run(projection<projection_from, projection_to>(
 				projection_from(), projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
 

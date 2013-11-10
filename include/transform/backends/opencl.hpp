@@ -91,8 +91,8 @@ namespace transform {
 			typedef transforms::scale<double>					scale_double;
 			typedef transforms::projection<
 				cartographic::projections::latlong,
-				cartographic::projections::tmerc<double>,
-				cartographic::ellipsoids::sphere>				projections_latlong_tmerc_double_sphere;
+				cartographic::projections::tmerc<cartographic::ellipsoids::sphere, double>>
+																projections_latlong_tmerc_double_sphere;
 
 			opencl():
 				device_id_(NULL), context_(NULL), queue_(NULL) {

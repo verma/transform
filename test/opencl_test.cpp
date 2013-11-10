@@ -106,11 +106,11 @@ BOOST_AUTO_TEST_CASE(gpu_device_computes_spherical_tmerc)
 	using namespace transform::backends;
 	using namespace transform::cartographic;
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	transformer<opencl<gpu_device>> t;
-	t.run(projection<projection_from, projection_to, ellipsoids::sphere>(
+	t.run(projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);

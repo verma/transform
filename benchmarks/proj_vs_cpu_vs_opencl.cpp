@@ -56,14 +56,14 @@ int main() {
 	transform::transformer<opencl<gpu_device>> gcl;
 
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	std::cout << "Running tests..." << std::endl;
 
 	time_this(" proj", [&]() {
 		proj.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -71,7 +71,7 @@ int main() {
 
 	time_this("mproj", [&]() {
 		mproj.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -79,7 +79,7 @@ int main() {
 
 	time_this("  cpu", [&]() {
 		cpu.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -87,7 +87,7 @@ int main() {
 
 	time_this(" mcpu", [&]() {
 		mcpu.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -95,7 +95,7 @@ int main() {
 
 	time_this("cpuCL", [&]() {
 		ccl.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -103,7 +103,7 @@ int main() {
 
 	time_this("gpuCL", [&]() {
 		gcl.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);

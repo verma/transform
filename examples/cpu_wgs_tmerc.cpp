@@ -1,5 +1,5 @@
-// proj_tmerc.cpp
-// tmerc projection using proj backend
+// proj_wsg_tmerc.cpp
+// tmerc WSG84 projection using proj backend
 //
 
 #include "transform.hpp"
@@ -10,7 +10,7 @@ int main() {
 	using namespace transform::transforms;
 	using namespace transform::cartographic;
 
-	transformer<proj> t;
+	transformer<cpu> t;
 
 	const size_t SIZE = 10000;
 
@@ -25,12 +25,12 @@ int main() {
         y.at(i) = 45 * cos(2 * M_PI * i / SIZE);
 	}
 
-	// run latlong -> tmerc projection using the proj.4 backend, with sphere ellipsoid
+	// run latlong -> tmerc projection using the proj.4 backend, with WSG84 ellipsoid
 	// and offsetted at 0.0, 0.0
 	
 	// give nicer names
 	typedef projections::latlong							projection_from;
-	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
+	typedef projections::tmerc<ellipsoids::WGS84, double>	projection_to;
 
 	t.run(projection<projection_from, projection_to>(
 				projection_from(), projection_to(projection_to::offset_t(0.0, 0.0))),

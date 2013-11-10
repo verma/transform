@@ -10,21 +10,44 @@
 #include <type_traits>
 
 #include "../cpu_op.hpp"
+#include "../utility.hpp"
 
 namespace transform {
 	namespace cartographic {
 		namespace ellipsoids {
-			struct base_ellipsiod {
-				std::string name;
-				base_ellipsiod(const std::string& n) : name(n) { }
+			struct sphere {
+				static constexpr const char *name = "sphere";
+
+				struct params {
+					static constexpr double major_axis = 6378137;
+					static constexpr double minor_axis = 6378137;
+					static constexpr double one_ecc2 = 1;
+					static constexpr double ecc2 = 0;
+					static constexpr double ecc = 0;
+					static constexpr double
+						en0 = 1, en1 = 0, en2 = 0, en3 = 0, en4 = 0;
+				};
 			};
 
-			struct sphere : public base_ellipsiod {
-				sphere() : base_ellipsiod("sphere") { }
-			};
+			struct WGS84 {
+				static constexpr const char *name = "WGS84";
 
-			struct WGS84 : public base_ellipsiod {
-				WGS84() : base_ellipsiod("WGS84") { }
+				struct params {
+					static constexpr double major_axis = 6378137;
+					static constexpr double minor_axis = 6356752.31424;
+					static constexpr double inverse_flattening = 298.25722349076665;
+					static constexpr double one_ecc2 = 0.9933056200082402;
+					static constexpr double ecc2 = 0.0066943799917598135;
+					static constexpr double ecc = 0.08181919085251219;
+					static constexpr double ec = 1.9955310875017547;
+					static constexpr double 
+						en0 = 0.9983242984313436263477115,
+						en1 = 0.0050186784214849861768259,
+						en2 = 0.0000210029809788678256417,
+						en3 = 0.0000001093660339214014494,
+						en4 = 0.0000000006178058818421671;
+				};
+
 			};
 		}
 
@@ -38,12 +61,18 @@ namespace transform {
 				latlong() : base_projection("latlong") { }
 			};
 
-			template<typename T>
+			template<typename TEllipsoid, typename T>
 			struct tmerc : base_projection {
 				typedef typename std::pair<T, T> offset_t;
-				tmerc(const offset_t& off) : base_projection("tmerc"), offset(off) { }
+				typedef TEllipsoid ellipsoid_type;
+
+
+				tmerc(const offset_t& off) : base_projection("tmerc"), offset(off),
+					ml0(util::projection::mlfn<TEllipsoid>(offset.second)) {
+				}
 
 				offset_t offset;
+				T ml0;
 			};
 		}
 	}
@@ -51,16 +80,13 @@ namespace transform {
 	namespace transforms {
 		template<
 			typename TFrom,
-			typename TTo,
-			typename TEllipsoid = cartographic::ellipsoids::sphere
+			typename TTo
 		>
-		struct projection : cpu_op<projection<TFrom, TTo, TEllipsoid>> {
-			typedef TEllipsoid ellipsoid_type;
-
+		struct projection : cpu_op<projection<TFrom, TTo>> {
 			TFrom from;
 			TTo to;
 
-			projection(const TFrom& from_, const TTo& to_):
+			projection(const TFrom& from_, const TTo& to_): cpu_op<projection<TFrom, TTo>>(*this),
 				from(from_), to(to_) {}
 		};
 	}

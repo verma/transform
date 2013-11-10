@@ -6,6 +6,7 @@
 #define __transform_utility_hpp__
 
 #include <chrono>
+#include <cmath>
 
 namespace transform {
 	namespace util {
@@ -28,6 +29,25 @@ namespace transform {
 		static inline long long timer_end(const std::chrono::high_resolution_clock::time_point& s) {
 			return std::chrono::duration_cast<std::chrono::milliseconds>(
 					std::chrono::high_resolution_clock::now() - s).count();
+		}
+
+		// some utility functions for project math
+		namespace projection {
+			template<typename TEllipsoid, typename T>
+			static inline T mlfn(const T& phi, const T& sphi_in, const T& cphi_in) {
+				T cphi = cphi_in * sphi_in;
+				T sphi = sphi_in * sphi_in;
+
+				typedef typename TEllipsoid::params p;
+
+				return(p::en0 * phi - cphi * (p::en1 + sphi * (p::en2
+								+ sphi * (p::en3 + sphi * p::en4))));
+			}
+
+			template<typename TEllipsoid, typename T>
+			static inline T mlfn(const T& phi) {
+				return mlfn<TEllipsoid>(phi, std::sin(phi), std::cos(phi));
+			}
 		}
 	}
 }

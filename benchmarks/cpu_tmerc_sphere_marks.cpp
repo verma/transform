@@ -42,14 +42,14 @@ int main() {
 	transform::transformer<cpu> proj;
 	transform::transformer<full_concurrency_multi_cpu> mproj;
 
-	typedef projections::latlong		projection_from;
-	typedef projections::tmerc<double>	projection_to;
+	typedef projections::latlong							projection_from;
+	typedef projections::tmerc<ellipsoids::sphere, double>	projection_to;
 
 	std::cout << "Running tests..." << std::endl;
 
 	time_this(" proj", [&]() {
 		proj.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
@@ -57,7 +57,7 @@ int main() {
 
 	time_this("mproj", [&]() {
 		mproj.run(
-			projection<projection_from, projection_to, ellipsoids::sphere>(
+			projection<projection_from, projection_to>(
 				projection_from(),
 				projection_to(projection_to::offset_t(0.0, 0.0))),
 				x, y, out_x, out_y);
