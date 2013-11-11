@@ -12,6 +12,9 @@ target_link_libraries(opencl_scale ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LI
 add_executable(opencl_tmerc opencl_tmerc.cpp)
 target_link_libraries(opencl_tmerc ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 
+add_executable(opencl_wgs_tmerc opencl_wgs_tmerc.cpp)
+target_link_libraries(opencl_wgs_tmerc ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
+
 add_executable(cpu_wgs_tmerc cpu_wgs_tmerc.cpp)
 target_link_libraries(cpu_wgs_tmerc ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 

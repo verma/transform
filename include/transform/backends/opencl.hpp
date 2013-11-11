@@ -93,6 +93,10 @@ namespace transform {
 				cartographic::projections::latlong,
 				cartographic::projections::tmerc<cartographic::ellipsoids::sphere, double>>
 																projections_latlong_tmerc_double_sphere;
+			typedef transforms::projection<
+				cartographic::projections::latlong,
+				cartographic::projections::tmerc<cartographic::ellipsoids::WGS84, double>>
+																projections_latlong_tmerc_double_wgs84;
 
 			opencl():
 				device_id_(NULL), context_(NULL), queue_(NULL) {
@@ -124,12 +128,14 @@ namespace transform {
 				// load some of our supported Kernels
 				detail::opencl_kernel_wrapper<TDeviceType, scale_double>::load(context, device_id);
 				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_sphere>::load(context, device_id);
+				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_wgs84>::load(context, device_id);
 			}
 
 			~opencl() {
 				// release our loaded kernels
 				detail::opencl_kernel_wrapper<TDeviceType, scale_double>::release();
 				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_sphere>::release();
+				detail::opencl_kernel_wrapper<TDeviceType, projections_latlong_tmerc_double_wgs84>::release();
 
 				clReleaseCommandQueue(queue_);
 				clReleaseContext(context_);
