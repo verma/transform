@@ -10,16 +10,39 @@
 #define __transform_backends_proj_hpp__
 
 #include "../transforms/cartographic.hpp"
+#include "../concurrency.hpp"
 
 #include <cassert>
 #include <stdexcept>
 #include <sstream>
 #include <cmath>
 
+#include <boost/range.hpp>
+
 #include <proj_api.h>
 
 namespace transform {
 	namespace backends {
+		namespace detail {
+			template<
+				typename TProjection,
+				typename T
+			>
+			void pre_process(const TProjection& p, T& x, T& y, size_t count) {
+				// default implementation does nothing
+				//
+			}
+
+			template<
+				typename TProjection,
+				typename T
+			>
+			void post_process(const TProjection& p, T& x, T& y, size_t count) {
+				// default implementation does nothing
+				//
+			}
+		}
+
 		template<unsigned MaxConcurrency>
 		struct multi_proj {
 			typedef multi_proj<MaxConcurrency> this_type;
@@ -54,19 +77,8 @@ namespace transform {
 					assert(pj_in != NULL);
 					assert(pj_out != NULL);
 
-					// convert all points to radians
-					//
-#define TO_RADIAN 0.017453292519943295769236907684886;
+					detail::pre_process(p.from, x, y, point_count);
 
-					double *px = x, *py = y, *pz = z;
-					for (size_t i = 0 ; i < point_count ; i ++) {
-						*px *= TO_RADIAN; px += stride;
-						*py *= TO_RADIAN; py += stride;
-						if (pz) {
-							*pz *= TO_RADIAN;
-							pz += stride;
-						}
-					}
 
 					// fasten your seatbelts
 					pj_transform(pj_in, pj_out,
@@ -78,7 +90,7 @@ namespace transform {
 					pj_free(pj_out);
 
 					pj_ctx_free(ctx);
-
+					detail::post_process(p.to, x, y, point_count);
 				};
 
 				typedef typename boost::range_iterator<ForwardIterableOutputRange>::type iterator;
@@ -134,6 +146,14 @@ namespace transform {
 
 		typedef multi_proj<0> full_concurrency_proj;
 		typedef multi_proj<1> proj;
+
+		// specializations for pre and post process operations
+		template<>
+		void detail::pre_process<cartographic::projections::latlong, double*>
+			(const cartographic::projections::latlong& p, double *&x, double *&y, size_t size);
+		template<>
+		void detail::post_process<cartographic::projections::latlong, double*>
+			(const cartographic::projections::latlong& p, double *&x, double *&y, size_t size);
 	}
 }
 #endif // __transform_backends_proj_hpp__

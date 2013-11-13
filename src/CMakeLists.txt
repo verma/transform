@@ -6,7 +6,8 @@ endif()
 
 SET(TRANSFORM_LIBRARY_SOURCES
 	cartographic_cpu.cpp
-	opencl_loaders.cpp)
+	opencl_loaders.cpp
+	proj_detail.cpp)
 
 include_directories(../include)
 

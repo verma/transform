@@ -20,8 +20,8 @@ target_link_libraries(cpu_wgs_tmerc ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_L
 
 if(TRANSFORM_HAVE_PROJ4)
 	add_executable(proj_tmerc proj_tmerc.cpp)
-	target_link_libraries(proj_tmerc ${PROJ4_LIBRARIES})
+	target_link_libraries(proj_tmerc ${PROJ4_LIBRARIES} ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 
 	add_executable(proj_wgs_tmerc proj_wgs_tmerc.cpp)
-	target_link_libraries(proj_wgs_tmerc ${PROJ4_LIBRARIES})
+	target_link_libraries(proj_wgs_tmerc ${PROJ4_LIBRARIES} ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 endif()
