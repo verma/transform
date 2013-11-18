@@ -5,6 +5,15 @@
 #include "transform/transforms/cartographic.hpp"
 #include <stdio.h>
 
+#define FC1 1.
+#define FC2 .5
+#define FC3 .16666666666666666666
+#define FC4 .08333333333333333333
+#define FC5 .05
+#define FC6 .03333333333333333333
+#define FC7 .02380952380952380952
+#define FC8 .01785714285714285714
+
 namespace transform {
 	// specialization do_op for projection for use by backends that do per point processing
 	// e.g. cpu
@@ -78,16 +87,8 @@ namespace transform {
 		projection<latlong, tmerc<WGS84, double>>, double, double
 	>(const projection<latlong, tmerc<WGS84, double>>& p,
 			const double& lambda_, const double& phi_, double& ox, double&oy) {
-#define FC1 1.
-#define FC2 .5
-#define FC3 .16666666666666666666
-#define FC4 .08333333333333333333
-#define FC5 .05
-#define FC6 .03333333333333333333
-#define FC7 .02380952380952380952
-#define FC8 .01785714285714285714
 
-#define TO_RADIAN 0.017453292519943295769236907684886
+		constexpr double TO_RADIAN = 0.017453292519943295769236907684886;
 
 		typedef cartographic::ellipsoids::WGS84			wgs84;
 		typedef cartographic::ellipsoids::WGS84::params wgs84params;
@@ -129,5 +130,96 @@ namespace transform {
 
 		ox = p.to.offset.first + scale * x;
 		oy = p.to.offset.second + scale * y;
+	}
+
+	template<>
+	void do_op<projection<tmerc<sphere, double>, latlong>, double, double >(
+			const projection<tmerc<sphere, double>, latlong>& p,
+			const double& x_in, const double& y_in, double& ox, double&oy) {
+		typedef cartographic::ellipsoids::sphere			sphere;
+		typedef cartographic::ellipsoids::sphere::params	sphereparams;
+
+		constexpr double scale = 1.0 / sphereparams::major_axis;
+
+
+		double x = (x_in - p.from.offset.first) * scale;
+		double y = (y_in - p.from.offset.second) * scale;
+
+		double s = scale;
+
+		double phi0 = 0.0; // TODO: get this value here somehow
+		double lambda0 = 0.0; // TODO: get this value here somehow
+
+		double h, g, phi, lambda;
+
+		h = std::exp(x);
+		g = 0.5 * (h - 1.0 / h);
+		h = std::cos(phi0 + y);
+
+		phi = std::asin(std::sqrt((1.0 - h * h) / (1.0 + g * g)));
+		if (y < 0.0)
+			phi = -phi;
+
+		lambda = (g || h) ? std::atan2(g, h) : 0.0;
+		if (std::abs(g) > 1e-10 || std::abs(h) > 1e-10)
+			lambda = std::atan2(g, h);
+
+		constexpr double TO_DEGREES = 180.0 / M_PI;
+
+		ox = util::mod_pi(lambda + lambda0);
+
+		ox = ox * TO_DEGREES;
+		oy = phi * TO_DEGREES;
+	}
+
+	template<>
+	void do_op<projection<tmerc<WGS84, double>, latlong>, double, double>(
+			const projection<tmerc<WGS84, double>, latlong>& p,
+			const double& x_in, const double& y_in, double& ox, double&oy) {
+		typedef cartographic::ellipsoids::WGS84			wgs84;
+		typedef cartographic::ellipsoids::WGS84::params	wgs84params;
+
+		constexpr double scale = 1.0 / wgs84params::major_axis;
+
+		double x = (x_in - p.from.offset.first) * scale;
+		double y = (y_in - p.from.offset.second) * scale;
+
+
+		double sinPhi, cosPhi, con, t, n, d, ds;
+
+		double lambda, phi;
+		double lambda0 = 0.0;
+
+		phi = util::projection::inv_mlfn<wgs84>(p.from.ml0 + y);
+
+		sinPhi = std::sin(phi);
+		cosPhi = std::cos(phi);
+
+		t = 0.0;
+		if (std::abs(cosPhi) > 1e-10)
+			t = sinPhi / cosPhi;
+
+		n = wgs84params::ecc2 / wgs84params::one_ecc2 * cosPhi * cosPhi;
+		con = 1. - wgs84params::ecc2 * sinPhi * sinPhi;
+		d = x * std::sqrt(con);
+		con *= t;
+		t *= t;
+		ds = d * d;
+
+		phi -= (con * ds / wgs84params::one_ecc2) * FC2 * (1. - 
+				ds * FC4 * (5. + t * (3. - 9. * n) + n * (1. - 4. * n) -
+					ds * FC6 * (61. + t * (90. - 252. * n + 45. * t) + 46. * n
+						- ds * FC8 * (1385. + t * (3633. + t * (4095. + 1574. * t)))
+						)));
+		lambda = d * (FC1 -
+				ds * FC3 * (1. + 2. * t + n -
+					ds * FC5 * (5. + t * (28. + 24. * t + 8. * n) + 6. * n
+						- ds * FC7 * (61. + t * (662. + t * (1320. + 720. * t)))
+						))) / cosPhi;
+
+		constexpr double TO_DEGREES = 180.0 / M_PI;
+
+		ox = util::mod_pi(lambda + lambda0) * TO_DEGREES;
+		oy = phi * TO_DEGREES;
 	}
 }

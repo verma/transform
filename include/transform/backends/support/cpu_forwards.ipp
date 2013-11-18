@@ -28,4 +28,28 @@ namespace transform {
 			cartographic::projections::latlong,
 			cartographic::projections::tmerc<cartographic::ellipsoids::WGS84, double>>& p,
 			const double& x, const double& y, double& ox, double&oy);
+
+	template<>
+	void do_op<
+		transforms::projection<
+			cartographic::projections::tmerc<cartographic::ellipsoids::sphere, double>,
+			cartographic::projections::latlong>,
+		double,
+		double
+	>(const transforms::projection<
+			cartographic::projections::tmerc<cartographic::ellipsoids::sphere, double>,
+			cartographic::projections::latlong>& p,
+			const double& x, const double& y, double& ox, double&oy);
+
+	template<>
+	void do_op<
+		transforms::projection<
+			cartographic::projections::tmerc<cartographic::ellipsoids::WGS84, double>,
+			cartographic::projections::latlong>,
+		double,
+		double
+	>(const transforms::projection<
+			cartographic::projections::tmerc<cartographic::ellipsoids::WGS84, double>,
+			cartographic::projections::latlong>& p,
+			const double& x, const double& y, double& ox, double&oy);
 }

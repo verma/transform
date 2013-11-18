@@ -19,8 +19,8 @@ namespace transform {
 				static constexpr const char *name = "sphere";
 
 				struct params {
-					static constexpr double major_axis = 6378137;
-					static constexpr double minor_axis = 6378137;
+					static constexpr double major_axis = 6370997.0;
+					static constexpr double minor_axis = 6370997.0;
 					static constexpr double one_ecc2 = 1;
 					static constexpr double ecc2 = 0;
 					static constexpr double ecc = 0;

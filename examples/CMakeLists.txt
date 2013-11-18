@@ -6,6 +6,9 @@ add_executable(multi_cpu multi_cpu.cpp)
 add_executable(cpu_tmerc_e cpu_tmerc_e.cpp)
 target_link_libraries(cpu_tmerc_e ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 
+add_executable(cpu_inv_tmerc_e cpu_inv_tmerc_e.cpp)
+target_link_libraries(cpu_inv_tmerc_e ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
+
 add_executable(opencl_scale opencl_scale.cpp)
 target_link_libraries(opencl_scale ${TRANSFORM_LIBRARY} ${TRANSFORM_DEPENDENT_LIBRARIES})
 

@@ -31,6 +31,11 @@ namespace transform {
 					std::chrono::high_resolution_clock::now() - s).count();
 		}
 
+		template<typename T>
+		static inline T mod_pi(const T& v) {
+			return std::abs(v) > M_PI ?  (v - (v > 0.0 ? 2*M_PI : -2*M_PI)) : v;
+		}
+
 		// some utility functions for project math
 		namespace projection {
 			template<typename TEllipsoid, typename T>
@@ -47,6 +52,30 @@ namespace transform {
 			template<typename TEllipsoid, typename T>
 			static inline T mlfn(const T& phi) {
 				return mlfn<TEllipsoid>(phi, std::sin(phi), std::cos(phi));
+			}
+
+			template<typename TEllipsoid, typename T>
+			static inline T inv_mlfn(const T& argphi) {
+				typedef typename TEllipsoid::params p;
+
+				T phi, sinPhi, cosPhi, t;
+				T es = p::ecc2;
+				T k = 1./(1.-es);
+
+				phi = argphi;
+				int iter = 20;
+				do {
+					sinPhi = std::sin(phi);
+					cosPhi = std::cos(phi);
+
+					t = 1. - es * sinPhi * sinPhi;
+					t = (mlfn<TEllipsoid>(phi, sinPhi, cosPhi) - argphi) * (t * std::sqrt(t)) * k;
+					phi -= t;
+					if (fabs(t) < 1e-12)
+						break;
+				} while(--iter);
+
+				return phi;
 			}
 		}
 	}
